@@ -61,7 +61,13 @@ class Compressor(object):
             )
 
     def should_compress(self, filename):
-        return not self.extension_re.search(filename)
+        exclude_regexp = getattr(settings, "WHITENOISE_SKIP_REGEXP", [])
+        skip = False
+        for r in exclude_regexp:
+            if re.match(r, filename):
+                skip = True
+                break
+        return not self.extension_re.search(filename) and not skip
 
     def log(self, message):
         pass
