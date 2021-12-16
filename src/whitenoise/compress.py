@@ -6,6 +6,8 @@ import os
 import re
 from io import BytesIO
 
+from django.utils.module_loading import import_string
+
 try:
     import brotli
 
@@ -124,6 +126,12 @@ class Compressor:
 
 
 def main(argv=None):
+    import pudb; pudb.set_trace()
+    compressor_class_str = argv.pop(
+        "compressor_class", "whitenoise.compress.Compressor"
+    )
+    compressor_class = import_string(compressor_class_str)
+
     parser = argparse.ArgumentParser(
         description="Search for all files inside <root> *not* matching "
         "<extensions> and produce compressed versions with "
@@ -146,7 +154,7 @@ def main(argv=None):
         dest="use_brotli",
     )
     parser.add_argument("root", help="Path root from which to search for files")
-    default_exclude = ", ".join(Compressor.SKIP_COMPRESS_EXTENSIONS)
+    default_exclude = ", ".join(compressor_class.SKIP_COMPRESS_EXTENSIONS)
     parser.add_argument(
         "extensions",
         nargs="*",
@@ -154,11 +162,11 @@ def main(argv=None):
             "File extensions to exclude from compression "
             + f"(default: {default_exclude})"
         ),
-        default=Compressor.SKIP_COMPRESS_EXTENSIONS,
+        default=compressor_class.SKIP_COMPRESS_EXTENSIONS,
     )
     args = parser.parse_args(argv)
 
-    compressor = Compressor(
+    compressor = compressor_class(
         extensions=args.extensions,
         use_gzip=args.use_gzip,
         use_brotli=args.use_brotli,
