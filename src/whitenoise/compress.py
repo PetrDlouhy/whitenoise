@@ -6,6 +6,8 @@ import os
 import re
 from io import BytesIO
 
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
 try:
@@ -125,8 +127,17 @@ class Compressor:
         return filename
 
 
+try:
+    compressor_class = import_string(
+        getattr(
+            settings, "WHITENOISE_COMPRESSOR_CLASS", "whitenoise.compress.Compressor"
+        ),
+    )
+except ImproperlyConfigured:
+    compressor_class = Compressor
+
+
 def main(argv=None):
-    import pudb; pudb.set_trace()
     compressor_class_str = argv.pop(
         "compressor_class", "whitenoise.compress.Compressor"
     )
